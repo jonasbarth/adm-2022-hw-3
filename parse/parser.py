@@ -32,9 +32,9 @@ class PlaceParser:
 
         parser = BeautifulSoup(self.html, 'html.parser')
 
-        self.name = parser.find_all("h1")[0].text
+        self.name = parser.find("h1", class_="DDPage__header-title").text
         self.num_people_visited = int(parser.find_all("div", class_="title-md item-action-count")[0].text) # should use more precise class
-
+        self.num_people_want = int(parser.find_all("div", class_="title-md item-action-count")[1].text)
 
 
 
