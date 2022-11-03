@@ -12,9 +12,7 @@ def parser():
     with codecs.open("./resources/City Hall Station – New York, New York - Atlas Obscura.html", "r", "utf-8") as file:
         html = file.read()
         parser = PlaceParser(html)
-
-        parser.parse()
-        return parser
+        return parser.parse()
 
 
 def test_name_is_parsed(parser):
@@ -34,7 +32,7 @@ def test_short_desc_is_parsed(parser):
 
 
 def test_tags_are_parsed(parser):
-    assert parser.place_tags == ['subways', 'subterranean', 'infrastructure', 'subterranean sites', 'abandoned', 'architectural oddities', 'architecture']
+    assert parser.tags == ['subways', 'subterranean', 'infrastructure', 'subterranean sites', 'abandoned', 'architectural oddities', 'architecture']
 
 
 def test_desc_is_parsed(parser):
@@ -51,7 +49,7 @@ def test_address_is_parsed(parser):
 
 def test_coordinates_are_parsed(parser):
     assert parser.lat == 40.7134
-    assert parser.long == -74.0046
+    assert parser.lon == -74.0046
 
 
 def test_editors_are_parsed(parser):
