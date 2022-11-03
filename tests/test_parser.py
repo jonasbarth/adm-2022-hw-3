@@ -1,5 +1,6 @@
 """Tests for the parser module"""
 import codecs
+import datetime
 
 import pytest
 
@@ -51,3 +52,44 @@ def test_address_is_parsed(parser):
 def test_coordinates_are_parsed(parser):
     assert parser.lat == 40.7134
     assert parser.long == -74.0046
+
+
+def test_editors_are_parsed(parser):
+    assert parser.editors == ['Rebekah Otto',
+                              'Habicurious',
+                              'charding407',
+                              'Annetta Black',
+                              'offtrackplanet',
+                              'Seth Teicher',
+                              'erjeffery',
+                              'Habicurious',
+                              'Seth Teicher',
+                              'wythe',
+                              'Annetta Black',
+                              'littlebrumble',
+                              'charding407',
+                              'fosterc827',
+                              'Mike H',
+                              'Allan',
+                              'jrc2692',
+                              'offtrackplanet',
+                              'mbison']
+
+
+def test_pub_date_is_parsed(parser):
+    assert parser.publication_date == datetime.datetime(2010, 5, 8)
+
+
+def test_appears_in(parser):
+    assert parser.appears_in == ['30 Unexpected Places to Have a Joyful Adventure in New York City',
+                                 '10 Secrets of the New York City Subway',
+                                 'The World\'s Top 100 Wonders in 2018',
+                                 'New York\'s Top 18 Wonders of 2018',
+                                 'New York City History, Hidden In Plain Sight']
+
+
+def test_related_places(parser):
+    assert parser.related_places == ['Crystal Palace Subway',
+                                     'Moscow Metro Stations',
+                                     'Rove Tunnel',
+                                     'Klafthmonos Square Parking Structure Fortification Walls']

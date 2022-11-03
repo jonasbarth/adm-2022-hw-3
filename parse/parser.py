@@ -1,7 +1,8 @@
 """A module that contains logic for parsing HTML pages from Atlas Obscura"""
+from datetime import datetime
+
 from bs4 import BeautifulSoup
 
-import unicodedata
 
 class PlaceParser:
     """Parses a HTML file of a place in Atlas Obscura."""
@@ -18,7 +19,7 @@ class PlaceParser:
     long: float
     editors: []
     publication_date: any
-    related: []
+    appears_in: []
     related_places: []
     url: str
 
@@ -26,48 +27,64 @@ class PlaceParser:
 
     def __init__(self, html):
         self.html = html
+        self.parser = BeautifulSoup(self.html, 'html.parser')
 
     def parse(self):
         """Parses the HTML and extracts data."""
         if self.parsed:
             return
 
-        parser = BeautifulSoup(self.html, 'html.parser')
-
-        self.name = parser.find("h1", class_="DDPage__header-title").text
-        self.num_people_visited = int(parser.find_all("div", class_="title-md item-action-count")[0].text) # should use more precise class
-        self.num_people_want = int(parser.find_all("div", class_="title-md item-action-count")[1].text)
-        self.short_desc = parser.find("h3", class_="DDPage__header-dek").text.strip()
-        self.place_tags = list(map(lambda anchor : anchor.text.strip(), parser.find_all("a", class_="itemTags__link")))
+        self.name = self.parser.find("h1", class_="DDPage__header-title").text
+        self.num_people_visited = int(
+            self.parser.find_all("div", class_="title-md item-action-count")[0].text)  # should use more precise class
+        self.num_people_want = int(self.parser.find_all("div", class_="title-md item-action-count")[1].text)
+        self.short_desc = self.parser.find("h3", class_="DDPage__header-dek").text.strip()
+        self.place_tags = list(
+            map(lambda anchor: anchor.text.strip(), self.parser.find_all("a", class_="itemTags__link")))
 
         # The description is in multiple <p> elements. We need to find them all, strip whitespace characters and join them back
-        desc_parts = list(map(lambda p : p.text.strip(), parser.find("div", {"id": "place-body"}).find_all("p")))
-        desc_parts = list(filter(lambda desc : bool(desc), desc_parts))
+        desc_parts = list(map(lambda p: p.text.strip(), self.parser.find("div", {"id": "place-body"}).find_all("p")))
+        desc_parts = list(filter(lambda desc: bool(desc), desc_parts))
         self.desc = ' '.join(desc_parts)
 
-        self.nearby = list(map(lambda near : near.text.strip(), parser.find_all('div', class_='DDPageSiderailRecirc__item-title')))
+        self.nearby = list(
+            map(lambda near: near.text.strip(), self.parser.find_all('div', class_='DDPageSiderailRecirc__item-title')))
 
         # The address is written across multiple lines, so we need to remove the white space and join them to have a single line.
-        address_parts = list(filter(lambda address_part : bool(address_part.text.strip()), parser.find('address').find("div").contents))
-        self.address = ', '.join(map(lambda address_part : address_part.text.strip(), address_parts))
+        address_parts = list(
+            filter(lambda address_part: bool(address_part.text.strip()),
+                   self.parser.find('address').find("div").contents))
+        self.address = ', '.join(map(lambda address_part: address_part.text.strip(), address_parts))
 
-        coordinates = parser.find('div', class_='DDPageSiderail__coordinates').text.strip().split(sep=',')
+        coordinates = self.parser.find('div', class_='DDPageSiderail__coordinates').text.strip().split(sep=',')
         self.lat, self.long = tuple(map(float, coordinates))
 
+        all_editors = list(map(lambda contributor: contributor.text.strip(),
+                               self.parser.find_all('a', class_='DDPContributorsList__contributor')))
 
-"""
-Place Name (to save as placeName): String.
-Place Tags (to save as placeTags): List of Strings.
-number of people who have been there (to save as numPeopleVisited): Integer.
-number of people who want to visit the place(to save as numPeopleWant): Integer.
-Description (to save as placeDesc): String. Everything from under the first image up to "know before you go" (orange frame on the example image).
-Short Description (to save as placeShortDesc): String. Everything from the title and location up to the image (blue frame on the example image).
-Nearby Places (to save as placeNearby): Extract the names of all nearby places, but only keep unique values: List of Strings.
-Address of the place(to save as placeAddress): String.
-Altitude and Longitude of the place's location(to save as placeAlt and placeLong): Integers
-The username of the post editors (to save as placeEditors): List of Strings.
-Post publishing date (to save as placePubDate): datetime.
-The names of the lists that the place was included in (to save as placeRelatedLists): List of Strings.
-The names of the related places (to save as placeRelatedPlaces): List of Strings.
-The URL of the page of the place (to save as placeURL):String
-"""
+        # Some editors have a duplicate first character that is followed by \n, we need to remove this
+        duplicate_char_editors = list(map(lambda e: e[1:].strip(), filter(lambda e: '\n' in e, all_editors)))
+        normal_editors = list(filter(lambda e: '\n' not in e, all_editors))
+
+        self.editors = normal_editors + duplicate_char_editors
+
+        self.publication_date = datetime.strptime(self.parser.find('div', class_='DDPContributor__name').text,
+                                                  '%b %d, %Y')
+        self.appears_in = self._find_appears_in_element()
+        self.related_places = self._find_related_places()
+
+    def _find_related_places(self):
+        return self._find_linked_places('Related')
+
+    def _find_appears_in_element(self):
+        return self._find_linked_places('Appears')
+
+    def _find_linked_places(self, title):
+        all_divs = self.parser.find_all('div', class_='athanasius')
+        div_with_appears_in, = list(filter(lambda div: title in div.text,
+                                           filter(lambda div: div.find('div', class_='CardRecircSection__title'),
+                                                  all_divs)))
+
+        appears_in_titles = list(map(lambda h3: h3.text.strip(), div_with_appears_in.find_all('h3')))
+
+        return appears_in_titles
