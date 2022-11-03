@@ -3,7 +3,8 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup
 
-
+#TODO create a place class to hold all the data
+#TODO create a place writer to write to a tsv file
 class PlaceParser:
     """Parses a HTML file of a place in Atlas Obscura."""
     html: str
