@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from domain import PlaceBuilder
 
 
-#TODO create a place writer to write to a tsv file
 class PlaceParser:
     """Parses a HTML file of a place in Atlas Obscura."""
     html: str
@@ -53,28 +52,27 @@ class PlaceParser:
         editors = normal_editors + duplicate_char_editors
 
         publication_date = datetime.strptime(self.parser.find('div', class_='DDPContributor__name').text,
-                                                  '%b %d, %Y')
+                                             '%b %d, %Y')
         appears_in = self._find_appears_in_element()
         related_places = self._find_related_places()
 
-        return PlaceBuilder()\
-            .set_name(name)\
-            .set_num_people_visited(num_people_visited)\
-            .set_num_people_want(num_people_want)\
-            .set_short_desc(short_desc)\
-            .set_desc(desc)\
-            .set_tags(place_tags)\
-            .set_nearby(nearby)\
-            .set_address(address)\
-            .set_lat(lat)\
-            .set_lon(lon)\
-            .set_editors(editors)\
-            .set_publication_date(publication_date)\
-            .set_appears_in(appears_in)\
-            .set_related_places(related_places)\
-            .set_url("")\
+        return PlaceBuilder() \
+            .set_name(name) \
+            .set_num_people_visited(num_people_visited) \
+            .set_num_people_want(num_people_want) \
+            .set_short_desc(short_desc) \
+            .set_desc(desc) \
+            .set_tags(place_tags) \
+            .set_nearby(nearby) \
+            .set_address(address) \
+            .set_lat(lat) \
+            .set_lon(lon) \
+            .set_editors(editors) \
+            .set_publication_date(publication_date) \
+            .set_appears_in(appears_in) \
+            .set_related_places(related_places) \
+            .set_url("") \
             .build()
-
 
     def _find_related_places(self):
         return self._find_linked_places('Related')
