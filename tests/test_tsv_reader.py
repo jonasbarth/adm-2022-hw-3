@@ -34,6 +34,6 @@ def assert_no_file():
 def test_that_description_is_read(place):
     path = write_place_to_tsv('./', [place])
 
-    descriptions = read_place_desc(path)
+    _, descriptions = read_place_desc(path)
 
     assert len(descriptions) == 1
