@@ -12,17 +12,12 @@ class PlaceParser:
     html: str
     url: str
 
-    parsed = False
-
     def __init__(self, html):
         self.html = html
         self.parser = BeautifulSoup(self.html, 'html.parser')
 
     def parse(self):
         """Parses the HTML and extracts data."""
-        if self.parsed:
-            return
-
         name = self.parser.find("h1", class_="DDPage__header-title").text
         num_people_visited = int(
             self.parser.find_all("div", class_="title-md item-action-count")[0].text)  # should use more precise class
