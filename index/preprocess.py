@@ -25,6 +25,6 @@ def preprocess(desc: str):
     no_stop_words_desc = list(filter(lambda word: word not in stop_words, lower_desc))
     cleaned_desc = list(filter(lambda word: word not in string.punctuation, no_stop_words_desc))
 
-    stemmed = [stemmer.stem(word) for word in cleaned_desc]
+    stemmed = set(stemmer.stem(word) for word in cleaned_desc)
     return stemmed
 

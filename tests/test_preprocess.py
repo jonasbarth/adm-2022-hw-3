@@ -1,5 +1,5 @@
 """Unit tests for preprocessing"""
-from preprocess import preprocess
+from index.preprocess import preprocess
 
 
 def test_that_punctations_are_removed():
