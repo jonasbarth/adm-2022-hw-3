@@ -52,7 +52,7 @@ class PlaceParser:
         editors = normal_editors + duplicate_char_editors
 
         publication_date = datetime.strptime(self.parser.find('div', class_='DDPContributor__name').text,
-                                             '%b %d, %Y')
+                                             '%B %d, %Y')
         appears_in = self._find_appears_in_element()
         related_places = self._find_related_places()
 
