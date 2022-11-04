@@ -26,4 +26,4 @@ def assert_no_file():
 
 def test_that_file_is_created(place):
     tsv_path = write_place_to_tsv('./', [place, place])
-    #os.remove(tsv_path)
+    os.remove(tsv_path)
