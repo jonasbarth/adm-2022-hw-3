@@ -9,26 +9,15 @@ class Index(ABC):
     """Abstract Base Class for a search index."""
 
     # TODO make the path check into a decorator
+    @abstractmethod
     def load(self, path):
         """Loads a stored conjunctive index."""
-        if not os.path.isdir(path):
-            raise OSError(f'The path: {path} does not exist.')
+        pass
 
-        file_name = 'conjunctive_index.json'
-        full_path = f'{path}/{file_name}'
-
-        with open(full_path, 'r') as file:
-            self.index = json.load(file)
-
+    @abstractmethod
     def save(self, path):
         """Saves the conjunctive index into a file."""
-        if not os.path.isdir(path):
-            raise OSError(f'The path: {path} does not exist.')
-
-        file_name = 'conjunctive_index.json'
-        full_path = f'{path}/{file_name}'
-        with open(full_path, 'w') as file:
-            json.dump(self.index, file)
+        pass
 
     @abstractmethod
     def put(self, word_id, document: str):
