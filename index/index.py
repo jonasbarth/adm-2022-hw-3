@@ -51,3 +51,14 @@ class Index(ABC):
         a KeyError if the word does not exist in the index.
         """
         pass
+
+    @abstractmethod
+    def query(self, query):
+        """Runs a query against the index.
+
+        :args
+        query - a query string.
+
+        :returns
+        a list of document ids that match the query.
+        """

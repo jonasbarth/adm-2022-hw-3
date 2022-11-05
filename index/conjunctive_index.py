@@ -39,3 +39,7 @@ class ConjunctiveIndex(Index):
 
         except KeyError:
             raise KeyError(f'The word: {word_id}, does not exist in the index.')
+
+    def query(self, query):
+        # Put the query code here
+        pass
