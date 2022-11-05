@@ -4,7 +4,7 @@ from attr import dataclass
 
 @dataclass(frozen=True)
 class Place:
-    """An immutable class to hold all information related to a place on Atlas Obscura. """
+    """An immutable class to hold all information related to a place on Atlas Obscura."""
     name: str
     tags: []
     num_people_visited: int
@@ -39,7 +39,6 @@ class PlaceBuilder:
     appears_in: []
     related_places: []
     url: str
-
 
     def set_name(self, name):
         self.name = name

@@ -16,7 +16,11 @@ class PlaceParser:
         self.parser = BeautifulSoup(self.html, 'html.parser')
 
     def parse(self):
-        """Parses the HTML and extracts data."""
+        """Parses the HTML and extracts data.
+
+        :returns
+        a Place object with the data from the HTML.
+        """
         name = self.parser.find("h1", class_="DDPage__header-title").text
         num_people_visited = int(
             self.parser.find_all("div", class_="title-md item-action-count")[0].text)  # should use more precise class
@@ -52,7 +56,7 @@ class PlaceParser:
         editors = normal_editors + duplicate_char_editors
 
         publication_date = datetime.strptime(self.parser.find('div', class_='DDPContributor__name').text,
-                                             '%b %d, %Y')
+                                             '%B %d, %Y')
         appears_in = self._find_appears_in_element()
         related_places = self._find_related_places()
 
