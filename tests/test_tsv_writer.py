@@ -5,7 +5,7 @@ import os
 import pytest
 
 from parse import PlaceParser
-from writer import write_place_to_tsv
+from util import write_place_to_tsv
 
 
 @pytest.fixture
