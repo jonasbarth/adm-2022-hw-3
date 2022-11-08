@@ -1,8 +1,8 @@
 """Module for a conjunctive index"""
 import json
 import os
-from queue import PriorityQueue
 
+from . import preprocess
 from .index import Index
 
 
@@ -20,11 +20,11 @@ class ConjunctiveIndex(Index):
         document - the unique document name that will be added to the word in the index.
         """
         try:
-            self.index[word_id].put(document)
+            self.index[word_id].add(document)
 
         except KeyError:
-            documents = PriorityQueue()
-            documents.put(document)
+            documents = set()
+            documents.add(document)
             self.index[word_id] = documents
 
     def get(self, word_id: int):
@@ -37,7 +37,7 @@ class ConjunctiveIndex(Index):
         a KeyError if the word does not exist in the index.
         """
         try:
-            return self.index[word_id].queue
+            return self.index[word_id]
 
         except KeyError:
             raise KeyError(f'The word: {word_id}, does not exist in the index.')
@@ -50,8 +50,7 @@ class ConjunctiveIndex(Index):
         full_path = f'{path}/{file_name}'
 
         with open(full_path, 'r') as file:
-            index = json.load(file)
-            self.index = {k: PriorityQueue(v) for k, v in index.items()}
+            self.index = json.load(file)
 
     def save(self, path):
         if not os.path.isdir(path):
@@ -60,11 +59,16 @@ class ConjunctiveIndex(Index):
         file_name = 'conjunctive_index.json'
         full_path = f'{path}/{file_name}'
 
-        index_with_list = {k: v.queue for k, v in self.index.items()}
-
         with open(full_path, 'w') as file:
-            json.dump(index_with_list, file)
+            json.dump(self.index, file)
 
     def query(self, query):
-        # Put the query code here
-        pass
+        query = preprocess(query)
+        found = []
+        for word in query:
+            try:
+                found.append(self.index[word])
+            except KeyError:
+                raise IndexError(f'{word} does not exist in the index')
+
+        return set.intersection(*map(set, found))
