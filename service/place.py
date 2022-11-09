@@ -1,5 +1,5 @@
 """A module for reading places."""
-from reader import read_places
+from util import read_places
 
 
 class PlaceService:
