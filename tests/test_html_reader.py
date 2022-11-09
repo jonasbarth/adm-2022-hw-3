@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from reader import read_html_from
+from util import read_html_from
 
 
 @pytest.fixture
