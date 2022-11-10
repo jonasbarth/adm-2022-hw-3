@@ -1,9 +1,9 @@
 """Module for writing Atlas Obscura places to tsv files"""
-from domain import Place
-import os
+
+import pandas as pd
 
 
-def write_place_to_tsv(path: str, places):
+def write_places_to_tsv(path: str, places):
     """Writes a Place object into a tsv file at the specified path.
 
     :args
@@ -13,27 +13,18 @@ def write_place_to_tsv(path: str, places):
     :returns
     the path of the saved tsv file
     """
+    columns = [*vars(places[0]).keys()]
+    places = list(map(lambda p: p.__dict__, places))
+    full_path = f'{path}/places.tsv'
 
-    file_name = 'places.tsv'
-    full_path = f'{path}{file_name}'
-    if not os.path.isdir(path):
-        raise OSError('The path: {path} does not exist.')
+    for place in places:
+        for key, value in place.items():
+            if isinstance(value, list):
+                new_value = ','.join(value)
+                place[key] = new_value
 
-    headers = '\t'.join(vars(places[0]).keys())
-    headers = f'{headers}\n'
+    places_df = pd.DataFrame.from_records(places, columns=columns)
 
-    with open(full_path, 'w', encoding='utf-8') as file:
-        file.write(headers)
-
-        for place in places:
-            line = []
-            for value in vars(place).values():
-                if isinstance(value, list):
-                    value = ','.join(value)
-
-                line.append(value)
-
-            line = '\t'.join(map(str, line))
-            file.write(f'{line}\n')
+    places_df.to_csv(full_path, sep='\t')
 
     return full_path
