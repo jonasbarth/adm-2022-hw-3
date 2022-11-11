@@ -105,7 +105,7 @@ class TfIdfIndex(Index):
         all_doc_scores = [self.get(word) for word in query]
         index_end = False
 
-        top_k = PriorityQueue(maxsize=k)
+        top_k = PriorityQueue(maxsize=k+1)
 
         while not index_end:
 
@@ -134,5 +134,6 @@ class TfIdfIndex(Index):
             # 4 we want to stop when either index has reached the end
             index_end = indeces[i] == len(all_doc_scores[i])
 
+        top_k.get()
         # higher similarities should come first
         return [top_k.get() for _ in range(top_k.qsize())][::-1]
