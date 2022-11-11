@@ -12,4 +12,4 @@ def read_place_desc(path: str):
 
 def read_places(path: str):
     """Reads places from the given path."""
-    return pd.read_csv(path, sep='\t', encoding='utf-8')
+    return pd.read_csv(path, sep='\t', encoding='utf-8', index_col=0)
