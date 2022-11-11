@@ -3,6 +3,8 @@ import math
 from collections import Counter
 from queue import PriorityQueue
 
+import numpy as np
+from numpy.linalg import norm
 from scipy import spatial
 
 from index import Index, preprocess
@@ -96,7 +98,7 @@ class TfIdfIndex(Index):
         query_tf_idf = []
         # compute the tf idf for the query
         for word in query:
-            tf = 1 / counter[word]
+            tf = counter[word] / len(query)
             idf = math.log(self.n_total_documents / len(self.index[word]))
             query_tf_idf.append(tf * idf)
 
@@ -122,7 +124,9 @@ class TfIdfIndex(Index):
 
                 if top_k.full():
                     top_k.get()
-                top_k.put((spatial.distance.cosine(query_tf_idf, tf_idf_vec), indexed_docs[0][-1].document_name))
+
+                cosine = np.dot(query_tf_idf, tf_idf_vec) / (norm(query_tf_idf) * norm(tf_idf_vec))
+                top_k.put((cosine, indexed_docs[0][-1].document_name))
 
             # 3 increase the minimum index
             i, index, doc = min(indexed_docs, key=lambda doc: doc[-1].document_name)
