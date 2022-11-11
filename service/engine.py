@@ -17,8 +17,19 @@ class SearchEngine:
         place_names = self.index.query(query)
         places = [self.place_service.get(place_name) for place_name in place_names]
 
-        return pd.concat(places)
+        all_places = pd.concat(places)
+        return all_places[['name', 'desc', 'url']]
 
+
+    def query_top_k(self, query, top_k):
+        result = self.index.query_top_k(query, top_k)
+        places = [self.place_service.get(place_name) for _, place_name in result]
+        similarity_scores = [similarity for similarity, _ in result]
+
+        all_places = pd.concat(places)
+        all_places['similarity'] = similarity_scores
+
+        return all_places[['name', 'desc', 'url', 'similarity']]
 
 
 
