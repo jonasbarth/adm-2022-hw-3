@@ -5,6 +5,7 @@ from attr import dataclass
 @dataclass(frozen=True)
 class Place:
     """An immutable class to hold all information related to a place on Atlas Obscura."""
+    id: int
     name: str
     tags: []
     num_people_visited: int
@@ -24,6 +25,7 @@ class Place:
 
 class PlaceBuilder:
     """A builder for the Place class."""
+    id: int
     name: str
     tags: []
     num_people_visited: int
@@ -100,8 +102,13 @@ class PlaceBuilder:
         self.url = url
         return self
 
+    def set_id(self, id):
+        self.id = id
+        return self
+
     def build(self):
-        return Place(self.name,
+        return Place(self.id,
+                     self.name,
                      self.tags,
                      self.num_people_visited,
                      self.num_people_want,

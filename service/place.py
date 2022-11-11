@@ -8,9 +8,9 @@ class PlaceService:
     def __init__(self):
         self.places = None
 
-    def get(self, name):
+    def get(self, id):
         """Returns the places that match the name."""
-        return self.places[self.places.name == name]
+        return self.places[self.places.id == id]
 
     def load(self, path):
         """Loads the place service from a specified path."""

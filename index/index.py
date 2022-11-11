@@ -14,19 +14,19 @@ class Index:
         self.index = {}
 
     @staticmethod
-    def create_from(documents, words):
+    def create_from(document_ids, words):
         index = Index()
-        for name, desc in zip(documents, words):
+        for id, desc in zip(document_ids, words):
 
             desc = preprocess(desc)
 
             for token in desc:
-                index.put(token, name)
+                index.put(token, id)
 
         return index
 
 
-    def put(self, word_id, document):
+    def put(self, word_id, document_id):
         """Puts a document into the inverted index at the word_id.
 
         :args
@@ -34,11 +34,11 @@ class Index:
         document - the unique document name that will be added to the word in the index.
         """
         try:
-            self.index[word_id].add(document)
+            self.index[word_id].add(document_id)
 
         except KeyError:
             documents = set()
-            documents.add(document)
+            documents.add(document_id)
             self.index[word_id] = documents
 
     def get(self, word_id: int):

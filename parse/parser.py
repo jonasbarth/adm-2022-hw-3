@@ -80,6 +80,8 @@ class PlaceParser:
         appears_in = self._find_appears_in_element()
         related_places = self._find_related_places()
 
+        id = hash((name, lat, lon))
+
         return PlaceBuilder() \
             .set_name(name) \
             .set_num_people_visited(num_people_visited) \
@@ -96,6 +98,7 @@ class PlaceParser:
             .set_appears_in(appears_in) \
             .set_related_places(related_places) \
             .set_url(url) \
+            .set_id(id) \
             .build()
 
     def _find_related_places(self):

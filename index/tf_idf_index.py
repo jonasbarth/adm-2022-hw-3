@@ -5,7 +5,6 @@ from queue import PriorityQueue
 
 import numpy as np
 from numpy.linalg import norm
-from scipy import spatial
 
 from index import Index, preprocess
 
@@ -13,33 +12,33 @@ from index import Index, preprocess
 class DocumentScore:
     """A class for storing a document and a document score."""
 
-    document_name: str
+    id: str
     score: float
 
-    def __init__(self, document_name, score):
-        self.document_name = document_name
+    def __init__(self, id, score):
+        self.id = id
         self.score = score
 
     def __hash__(self):
-        return hash(self.document_name)
+        return hash(self.id)
 
     def __eq__(self, other):
-        return other.document_name == self.document_name
+        return other.id == self.id
 
     def __repr__(self):
-        return f'{self.document_name}, {self.score}'
+        return f'{self.id}, {self.score}'
 
     def __lt__(self, other):
-        return self.document_name < other.document_name
+        return self.id < other.id
 
     def __gt__(self, other):
-        return self.document_name > other.document_name
+        return self.id > other.id
 
     def __ge__(self, other):
-        return self.document_name >= other.document_name
+        return self.id >= other.id
 
     def __le__(self, other):
-        return self.document_name <= other.document_name
+        return self.id <= other.id
 
 
 class TfIdfIndex(Index):
@@ -50,9 +49,9 @@ class TfIdfIndex(Index):
         self.n_total_documents = n_total_documents
 
     @staticmethod
-    def create_from(documents, words):
-        index = TfIdfIndex(len(documents))
-        for name, desc in zip(documents, words):
+    def create_from(document_ids, words):
+        index = TfIdfIndex(len(document_ids))
+        for name, desc in zip(document_ids, words):
 
             desc = preprocess(desc, unique=False)
 
@@ -116,20 +115,20 @@ class TfIdfIndex(Index):
                 index, doc_scores = index_doc_scores
                 indexed_docs.append([i, index, doc_scores[index]])
 
-            document_names = list(map(lambda t: t[-1].document_name, indexed_docs))
+            document_ids = list(map(lambda t: t[-1].id, indexed_docs))
 
             # 2 if all the items the current indeces point to, are the same, we save the distance to the query in the heap
-            if all(name == document_names[0] for name in document_names):
+            if all(id == document_ids[0] for id in document_ids):
                 tf_idf_vec = [row[-1].score for row in indexed_docs]
 
                 if top_k.full():
                     top_k.get()
 
                 cosine = np.dot(query_tf_idf, tf_idf_vec) / (norm(query_tf_idf) * norm(tf_idf_vec))
-                top_k.put((cosine, indexed_docs[0][-1].document_name))
+                top_k.put((cosine, indexed_docs[0][-1].id))
 
             # 3 increase the minimum index
-            i, index, doc = min(indexed_docs, key=lambda doc: doc[-1].document_name)
+            i, index, doc = min(indexed_docs, key=lambda doc: doc[-1].id)
             indeces[i] += 1
 
             # 4 we want to stop when either index has reached the end
