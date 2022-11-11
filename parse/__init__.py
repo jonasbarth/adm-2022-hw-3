@@ -1,1 +1,1 @@
-from .parser import PlaceParser
+from .parser import PlaceParser, parse_htmls

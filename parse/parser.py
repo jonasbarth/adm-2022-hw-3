@@ -1,10 +1,28 @@
 """A module that contains logic for parsing HTML pages from Atlas Obscura"""
 import json
+import logging
 from datetime import datetime
 
 from bs4 import BeautifulSoup
 
 from domain import PlaceBuilder
+
+logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
+
+from joblib import Parallel, delayed
+
+
+def parse_htmls(htmls, n_jobs=7):
+    """Parses a list of html strings using multiprocessing, returning a list of Place objects."""
+
+    def parallel(html):
+        try:
+            return PlaceParser(html).parse()
+        except Exception as e:
+            print(f"Problem with parsing {e}, {html}")
+
+    places = Parallel(n_jobs=n_jobs)(delayed(parallel)(html) for html in htmls)
+    return places
 
 
 class PlaceParser:
@@ -14,7 +32,7 @@ class PlaceParser:
 
     def __init__(self, html):
         self.html = html
-        self.parser = BeautifulSoup(self.html, 'html.parser')
+        self.parser = BeautifulSoup(self.html, 'lxml')
 
     def parse(self):
         """Parses the HTML and extracts data.
