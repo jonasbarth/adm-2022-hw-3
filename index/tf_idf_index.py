@@ -105,7 +105,7 @@ class TfIdfIndex(Index):
         all_doc_scores = [self.get(word) for word in query]
         index_end = False
 
-        top_k = PriorityQueue(maxsize=k+1)
+        top_k = PriorityQueue(maxsize=k)
 
         while not index_end:
 
@@ -121,10 +121,13 @@ class TfIdfIndex(Index):
             if all(id == document_ids[0] for id in document_ids):
                 tf_idf_vec = [row[-1].score for row in indexed_docs]
 
-                if top_k.full():
-                    top_k.get()
-
                 cosine = np.dot(query_tf_idf, tf_idf_vec) / (norm(query_tf_idf) * norm(tf_idf_vec))
+
+                if top_k.full():
+                    min_cosine, _ = top_k.get()
+                    if cosine < min_cosine:
+                        cosine = min_cosine
+
                 top_k.put((cosine, indexed_docs[0][-1].id))
 
             # 3 increase the minimum index
@@ -134,6 +137,5 @@ class TfIdfIndex(Index):
             # 4 we want to stop when either index has reached the end
             index_end = indeces[i] == len(all_doc_scores[i])
 
-        top_k.get()
         # higher similarities should come first
         return [top_k.get() for _ in range(top_k.qsize())][::-1]
