@@ -98,7 +98,7 @@ class TfIdfIndex(Index):
         # compute the tf idf for the query
         for word in query:
             tf = counter[word] / len(query)
-            idf = math.log(self.n_total_documents / len(self.index[word]))
+            idf = math.log(self.n_total_documents + 1 / len(self.index[word]))
             query_tf_idf.append(tf * idf)
 
         indeces = [0] * len(query)
