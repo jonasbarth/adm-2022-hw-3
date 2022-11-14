@@ -3,7 +3,7 @@ import json
 import logging
 from datetime import datetime
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 from domain import PlaceBuilder
 
@@ -61,6 +61,7 @@ class PlaceParser:
         address_parts = list(
             filter(lambda address_part: bool(address_part.text.strip()),
                    self.parser.find('address').find("div").contents))
+        address_parts = list(filter(lambda address_part: not isinstance(address_part, Tag), address_parts))
         address = ', '.join(map(lambda address_part: address_part.text.strip(), address_parts))
 
         lat = self.parser.find('meta', {'property':'og:latitude'})['content']
