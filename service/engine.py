@@ -6,7 +6,7 @@ import pandas as pd
 
 from index import Index
 from service import PlaceService
-from util import get_location, get_distance
+from util import get_location, get_distance, calculate_distance_score, calculate_popularity_score
 from util.location import max_distance_on_earth
 
 
@@ -36,76 +36,89 @@ class SearchEngine:
 
         return all_places[['name', 'desc', 'url', 'similarity']]
 
-    def query_custom(self, query, top_k, close_to_me=False):
+    def query_custom(self, query, top_k, close_to_me=False, popularity=False):
+
+        if not (close_to_me or popularity):
+            raise ValueError("Must specify either close_to_me or popularity.")
+
         place_names = self.index.query(query)
         places = [self.place_service.get(place_name) for place_name in place_names]
 
         all_places = pd.concat(places)
 
         queue = PriorityQueue(maxsize=top_k)
-        if close_to_me:
+
+        if close_to_me and popularity:
             current_loc = get_location()
             current_coords = (current_loc['latitude'], current_loc['longitude'])
 
-            for id_coords in all_places[['id', 'lat', 'lon']].values:
-                id, lat, lon = id_coords
+            all_places = all_places[['id', 'num_people_visited', 'num_people_want', 'lat', 'lon']]
 
-                distance = get_distance(current_coords, (lat, lon))
+            total_people_visited = all_places.num_people_visited.sum()
+            total_people_want = all_places.num_people_want.sum()
 
-                score = -distance
+            for row in all_places.values:
+                id, num_people_visited, num_people_want, lat, lon = row
+
+                distance_score = calculate_distance_score(current_coords, (lat, lon))
+
+                num_people_visited = 1 if num_people_visited == 0 else num_people_visited
+                num_people_want = 1 if num_people_want == 0 else num_people_want
+                popularity_score = calculate_popularity_score(num_people_visited, total_people_visited, num_people_want, total_people_want)
+
+                score = distance_score * popularity_score
 
                 if queue.full():
-                    furthest_away_score, furthest_away_id = queue.get()
+                    lowest_score, lowest_id = queue.get()
 
-                    if furthest_away_score > score:
-                        score = furthest_away_score
-                        id = furthest_away_id
+                    if lowest_score > score:
+                        score = lowest_score
+                        id = lowest_id
 
                 queue.put((score, id))
 
-        scores_ids = [queue.get() for _ in range(queue.qsize())][::-1]
-        places = [self.place_service.get(place_id) for _, place_id in scores_ids]
-        similarity_scores = [similarity for similarity, _ in scores_ids]
+        elif close_to_me:
+            current_loc = get_location()
+            current_coords = (current_loc['latitude'], current_loc['longitude'])
 
-        ranked_places = pd.concat(places)
-        ranked_places['similarity'] = similarity_scores
-        ranked_places['similarity'] = (max_distance_on_earth + ranked_places['similarity']) / max_distance_on_earth
+            all_places = all_places[['id', 'lat', 'lon']]
+            for id_coords in all_places.values:
+                id, lat, lon = id_coords
 
-        return ranked_places[['name', 'desc', 'address', 'similarity']]
+                distance_score = calculate_distance_score(current_coords, (lat, lon))
+
+                if queue.full():
+                    lowest_score, lowest_id = queue.get()
+
+                    if lowest_score > distance_score:
+                        distance_score = lowest_score
+                        id = lowest_id
 
 
-    def query_popularity(self, query, top_k):
-        place_names = self.index.query(query)
-        places = [self.place_service.get(place_name) for place_name in place_names]
+                queue.put((distance_score, id))
 
-        all_places = pd.concat(places)
+        elif popularity:
+            all_places = all_places[['id', 'num_people_visited', 'num_people_want']]
+            total_people_visited = all_places.num_people_visited.sum()
+            total_people_want = all_places.num_people_want.sum()
+            for row in all_places.values:
+                id, num_people_visited, num_people_want = row
 
-        all_places = all_places[['id', 'num_people_visited', 'num_people_want']]
+                num_people_visited = 1 if num_people_visited == 0 else num_people_visited
+                num_people_want = 1 if num_people_want == 0 else num_people_want
+                # more people visit, the better
 
-        # popularity score = 1/num people want + 1/num people visited
-        # num people visited should be higher
+                # means that if either visited or want is 0, we will have a score of 0
+                popularity_score = calculate_popularity_score(num_people_visited, total_people_visited, num_people_want, total_people_want)
 
-        queue = PriorityQueue(maxsize=top_k)
+                if queue.full():
+                    lowest_score, lowest_id = queue.get()
 
-        for row in all_places.values:
-            id, num_people_visited, num_people_want = row
+                    if lowest_score > popularity_score:
+                        popularity_score = lowest_score
+                        id = lowest_id
 
-            num_people_visited = 1 if num_people_visited == 0 else num_people_visited
-            num_people_want = 1 if num_people_want == 0 else num_people_want
-            # more people visit, the better
-            total_people = num_people_visited + num_people_want
-
-            # means that if either visited or want is 0, we will have a score of 0
-            score = (1 - 1 / num_people_visited) * (1 - 1 / num_people_want)
-
-            if queue.full():
-                lowest_score, lowest_id = queue.get()
-
-                if lowest_score > score:
-                    score = lowest_score
-                    id = lowest_id
-
-            queue.put((score, id))
+                queue.put((popularity_score, id))
 
         scores_ids = [queue.get() for _ in range(queue.qsize())][::-1]
         places = [self.place_service.get(place_id) for _, place_id in scores_ids]
