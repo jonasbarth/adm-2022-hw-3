@@ -7,6 +7,7 @@ import pandas as pd
 from index import Index
 from service import PlaceService
 from util import get_location, get_distance
+from util.location import max_distance_on_earth
 
 
 class SearchEngine:
@@ -69,6 +70,7 @@ class SearchEngine:
 
         ranked_places = pd.concat(places)
         ranked_places['similarity'] = similarity_scores
+        ranked_places['similarity'] = (max_distance_on_earth + ranked_places['similarity']) / max_distance_on_earth
 
         return ranked_places[['name', 'desc', 'address', 'similarity']]
 

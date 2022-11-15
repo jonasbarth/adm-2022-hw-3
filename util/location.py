@@ -25,3 +25,7 @@ def get_location():
 
 def get_distance(coords_1, coords_2):
     return geopy.distance.geodesic(coords_1, coords_2).km
+
+
+earth_circumference_km = 40075
+max_distance_on_earth = earth_circumference_km / 2
