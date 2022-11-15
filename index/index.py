@@ -1,6 +1,7 @@
 """Module for a super class of a index used in a search engine."""
 
 import json
+import pickle
 import os
 from abc import abstractmethod
 
@@ -25,6 +26,17 @@ class Index:
 
         return index
 
+    @staticmethod
+    def load_from(path):
+        if not os.path.isfile(path):
+            raise OSError(f'The file: {path} does not exist.')
+
+        index = Index()
+
+        with open(path, 'rb') as file:
+            index.index = pickle.load(file)
+
+        return index
 
     def put(self, word_id, document_id):
         """Puts a document into the inverted index at the word_id.
@@ -56,25 +68,14 @@ class Index:
         except KeyError:
             raise KeyError(f'The word: {word_id}, does not exist in the index.')
 
-    def load(self, path):
+    def save(self, path, name):
         if not os.path.isdir(path):
             raise OSError(f'The path: {path} does not exist.')
 
-        file_name = 'conjunctive_index.json'
-        full_path = f'{path}/{file_name}'
+        full_path = f'{path}/{name}.pickle'
 
-        with open(full_path, 'r') as file:
-            self.index = json.load(file)
-
-    def save(self, path):
-        if not os.path.isdir(path):
-            raise OSError(f'The path: {path} does not exist.')
-
-        file_name = 'conjunctive_index.json'
-        full_path = f'{path}/{file_name}'
-
-        with open(full_path, 'w') as file:
-            json.dump(self.index, file)
+        with open(full_path, 'wb') as file:
+            pickle.dump(self.index, file)
 
     def query(self, query):
         """Runs a query against the index.

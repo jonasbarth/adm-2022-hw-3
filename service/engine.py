@@ -73,6 +73,18 @@ class SearchEngine:
         return ranked_places[['name', 'desc', 'address', 'similarity']]
 
 
+    def query_popularity(self, query, top_k):
+        place_names = self.index.query(query)
+        places = [self.place_service.get(place_name) for place_name in place_names]
+
+        all_places = pd.concat(places)
+
+        all_places = all_places[['id', 'num_people_visited', 'num_people_want', 'appears_in']]
+
+
+
+        queue = PriorityQueue(maxsize=top_k)
+
 
 
 
