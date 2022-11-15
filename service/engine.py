@@ -48,10 +48,9 @@ class SearchEngine:
             current_coords = (current_loc['latitude'], current_loc['longitude'])
 
             for id_coords in all_places[['id', 'lat', 'lon']].values:
-                id = id_coords[0]
-                coords = id_coords[1:]
+                id, lat, lon = id_coords
 
-                distance = get_distance(current_coords, coords)
+                distance = get_distance(current_coords, (lat, lon))
 
                 score = -distance
 
@@ -81,13 +80,38 @@ class SearchEngine:
 
         all_places = pd.concat(places)
 
-        all_places = all_places[['id', 'num_people_visited', 'num_people_want', 'appears_in']]
+        all_places = all_places[['id', 'num_people_visited', 'num_people_want']]
 
-
+        # popularity score = 1/num people want + 1/num people visited
+        # num people visited should be higher
 
         queue = PriorityQueue(maxsize=top_k)
 
+        for row in all_places.values:
+            id, num_people_visited, num_people_want = row
 
+            num_people_visited = 1 if num_people_visited == 0 else num_people_visited
+            num_people_want = 1 if num_people_want == 0 else num_people_want
+            # more people visit, the better
+            total_people = num_people_visited + num_people_want
 
+            # means that if either visited or want is 0, we will have a score of 0
+            score = (1 - 1 / num_people_visited) * (1 - 1 / num_people_want)
 
+            if queue.full():
+                lowest_score, lowest_id = queue.get()
 
+                if lowest_score > score:
+                    score = lowest_score
+                    id = lowest_id
+
+            queue.put((score, id))
+
+        scores_ids = [queue.get() for _ in range(queue.qsize())][::-1]
+        places = [self.place_service.get(place_id) for _, place_id in scores_ids]
+        similarity_scores = [similarity for similarity, _ in scores_ids]
+
+        ranked_places = pd.concat(places)
+        ranked_places['similarity'] = similarity_scores
+
+        return ranked_places[['name', 'desc', 'address', 'similarity']]
