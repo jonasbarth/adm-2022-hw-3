@@ -1,5 +1,7 @@
 """Module for the top k index"""
 import math
+import os
+import pickle
 from collections import Counter
 from queue import PriorityQueue
 
@@ -63,6 +65,17 @@ class TfIdfIndex(Index):
                 index.put(token, doc_score)
 
         index.postprocess()
+
+        return index
+
+    @staticmethod
+    def load_from(path):
+        if not os.path.isfile(path):
+            raise OSError(f'The file: {path} does not exist.')
+
+
+        with open(path, 'rb') as file:
+            index = pickle.load(file)
 
         return index
 

@@ -31,10 +31,8 @@ class Index:
         if not os.path.isfile(path):
             raise OSError(f'The file: {path} does not exist.')
 
-        index = Index()
-
         with open(path, 'rb') as file:
-            index.index = pickle.load(file)
+            index = pickle.load(file)
 
         return index
 
@@ -75,7 +73,7 @@ class Index:
         full_path = f'{path}/{name}.pickle'
 
         with open(full_path, 'wb') as file:
-            pickle.dump(self.index, file)
+            pickle.dump(self, file)
 
     def query(self, query):
         """Runs a query against the index.
