@@ -1,13 +1,11 @@
 """Python module containing logic for the Atlas Obscura search engine."""
-import math
 from queue import PriorityQueue
 
 import pandas as pd
 
 from index import Index
 from service import PlaceService
-from util import get_location, get_distance, calculate_distance_score, calculate_popularity_score
-from util.location import max_distance_on_earth
+from util import get_location, calculate_distance_score, calculate_popularity_score
 
 
 class SearchEngine:
@@ -24,7 +22,6 @@ class SearchEngine:
 
         all_places = pd.concat(places)
         return all_places[['name', 'desc', 'url']]
-
 
     def query_top_k(self, query, top_k):
         result = self.index.query_top_k(query, top_k)
@@ -49,76 +46,16 @@ class SearchEngine:
         queue = PriorityQueue(maxsize=top_k)
 
         if close_to_me and popularity:
-            current_loc = get_location()
-            current_coords = (current_loc['latitude'], current_loc['longitude'])
-
             all_places = all_places[['id', 'num_people_visited', 'num_people_want', 'lat', 'lon']]
-
-            total_people_visited = all_places.num_people_visited.sum()
-            total_people_want = all_places.num_people_want.sum()
-
-            for row in all_places.values:
-                id, num_people_visited, num_people_want, lat, lon = row
-
-                distance_score = calculate_distance_score(current_coords, (lat, lon))
-
-                num_people_visited = 1 if num_people_visited == 0 else num_people_visited
-                num_people_want = 1 if num_people_want == 0 else num_people_want
-                popularity_score = calculate_popularity_score(num_people_visited, total_people_visited, num_people_want, total_people_want)
-
-                score = distance_score * popularity_score
-
-                if queue.full():
-                    lowest_score, lowest_id = queue.get()
-
-                    if lowest_score > score:
-                        score = lowest_score
-                        id = lowest_id
-
-                queue.put((score, id))
+            queue = _get_close_to_me_and_popularity_queue(all_places, top_k)
 
         elif close_to_me:
-            current_loc = get_location()
-            current_coords = (current_loc['latitude'], current_loc['longitude'])
-
             all_places = all_places[['id', 'lat', 'lon']]
-            for id_coords in all_places.values:
-                id, lat, lon = id_coords
-
-                distance_score = calculate_distance_score(current_coords, (lat, lon))
-
-                if queue.full():
-                    lowest_score, lowest_id = queue.get()
-
-                    if lowest_score > distance_score:
-                        distance_score = lowest_score
-                        id = lowest_id
-
-
-                queue.put((distance_score, id))
+            queue = _get_close_to_me_queue(all_places, top_k)
 
         elif popularity:
             all_places = all_places[['id', 'num_people_visited', 'num_people_want']]
-            total_people_visited = all_places.num_people_visited.sum()
-            total_people_want = all_places.num_people_want.sum()
-            for row in all_places.values:
-                id, num_people_visited, num_people_want = row
-
-                num_people_visited = 1 if num_people_visited == 0 else num_people_visited
-                num_people_want = 1 if num_people_want == 0 else num_people_want
-                # more people visit, the better
-
-                # means that if either visited or want is 0, we will have a score of 0
-                popularity_score = calculate_popularity_score(num_people_visited, total_people_visited, num_people_want, total_people_want)
-
-                if queue.full():
-                    lowest_score, lowest_id = queue.get()
-
-                    if lowest_score > popularity_score:
-                        popularity_score = lowest_score
-                        id = lowest_id
-
-                queue.put((popularity_score, id))
+            queue = _get_popularity_queue(all_places, top_k)
 
         scores_ids = [queue.get() for _ in range(queue.qsize())][::-1]
         places = [self.place_service.get(place_id) for _, place_id in scores_ids]
@@ -128,3 +65,80 @@ class SearchEngine:
         ranked_places['similarity'] = similarity_scores
 
         return ranked_places[['name', 'desc', 'address', 'similarity']]
+
+
+def _get_popularity_queue(matched_places, top_k):
+    queue = PriorityQueue(maxsize=top_k)
+
+    total_people_visited = matched_places.num_people_visited.sum()
+    total_people_want = matched_places.num_people_want.sum()
+
+    for row in matched_places.values:
+        id, num_people_visited, num_people_want = row
+
+        num_people_visited = 1 if num_people_visited == 0 else num_people_visited
+        num_people_want = 1 if num_people_want == 0 else num_people_want
+        # more people visit, the better
+
+        # means that if either visited or want is 0, we will have a score of 0
+        popularity_score = calculate_popularity_score(num_people_visited, total_people_visited, num_people_want,
+                                                      total_people_want)
+
+        _add_to_queue(queue, popularity_score, id)
+
+    return queue
+
+
+def _get_close_to_me_queue(matched_places, top_k):
+    queue = PriorityQueue(maxsize=top_k)
+
+    current_loc = get_location()
+    current_coords = (current_loc['latitude'], current_loc['longitude'])
+
+    for id_coords in matched_places.values:
+        id, lat, lon = id_coords
+
+        distance_score = calculate_distance_score(current_coords, (lat, lon))
+
+        _add_to_queue(queue, distance_score, id)
+
+        queue.put((distance_score, id))
+
+    return queue
+
+
+def _get_close_to_me_and_popularity_queue(matched_places, top_k):
+    queue = PriorityQueue(maxsize=top_k)
+
+    current_loc = get_location()
+    current_coords = (current_loc['latitude'], current_loc['longitude'])
+
+    total_people_visited = matched_places.num_people_visited.sum()
+    total_people_want = matched_places.num_people_want.sum()
+
+    for row in matched_places.values:
+        id, num_people_visited, num_people_want, lat, lon = row
+
+        distance_score = calculate_distance_score(current_coords, (lat, lon))
+
+        num_people_visited = 1 if num_people_visited == 0 else num_people_visited
+        num_people_want = 1 if num_people_want == 0 else num_people_want
+        popularity_score = calculate_popularity_score(num_people_visited, total_people_visited, num_people_want,
+                                                      total_people_want)
+
+        score = distance_score * popularity_score
+
+        _add_to_queue(queue, score, id)
+
+    return queue
+
+
+def _add_to_queue(queue, score, id):
+    if queue.full():
+        lowest_score, lowest_id = queue.get()
+
+        if lowest_score > score:
+            score = lowest_score
+            id = lowest_id
+
+    queue.put((score, id))
