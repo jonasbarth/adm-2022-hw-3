@@ -139,3 +139,7 @@ class TfIdfIndex(Index):
 
         # higher similarities should come first
         return [top_k.get() for _ in range(top_k.qsize())][::-1]
+
+
+    def query_custom_top_k(self, query, top_k, close_to_me=False):
+        pass
