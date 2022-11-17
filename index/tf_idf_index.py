@@ -1,5 +1,7 @@
 """Module for the top k index"""
 import math
+import os
+import pickle
 from collections import Counter
 from queue import PriorityQueue
 
@@ -66,6 +68,17 @@ class TfIdfIndex(Index):
 
         return index
 
+    @staticmethod
+    def load_from(path):
+        if not os.path.isfile(path):
+            raise OSError(f'The file: {path} does not exist.')
+
+
+        with open(path, 'rb') as file:
+            index = pickle.load(file)
+
+        return index
+
     def postprocess(self):
         for key, value in self.index.items():
 
@@ -98,7 +111,7 @@ class TfIdfIndex(Index):
         # compute the tf idf for the query
         for word in query:
             tf = counter[word] / len(query)
-            idf = math.log(self.n_total_documents / len(self.index[word]))
+            idf = math.log(self.n_total_documents + 1 / len(self.index[word]))
             query_tf_idf.append(tf * idf)
 
         indeces = [0] * len(query)
@@ -139,3 +152,7 @@ class TfIdfIndex(Index):
 
         # higher similarities should come first
         return [top_k.get() for _ in range(top_k.qsize())][::-1]
+
+
+    def query_custom_top_k(self, query, top_k, close_to_me=False):
+        pass
