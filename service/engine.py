@@ -33,9 +33,9 @@ class SearchEngine:
 
         return all_places[['name', 'desc', 'url', 'similarity']]
 
-    def query_custom(self, query, top_k, close_to_me=False, popularity=False):
+    def query_custom(self, query, top_k, proximity=False, popularity=False):
 
-        if not (close_to_me or popularity):
+        if not (proximity or popularity):
             raise ValueError("Must specify either close_to_me or popularity.")
 
         place_names = self.index.query(query)
@@ -45,13 +45,13 @@ class SearchEngine:
 
         queue = PriorityQueue(maxsize=top_k)
 
-        if close_to_me and popularity:
+        if proximity and popularity:
             all_places = all_places[['id', 'num_people_visited', 'num_people_want', 'lat', 'lon']]
-            queue = _get_close_to_me_and_popularity_queue(all_places, top_k)
+            queue = _get_proximity_and_popularity_queue(all_places, top_k)
 
-        elif close_to_me:
+        elif proximity:
             all_places = all_places[['id', 'lat', 'lon']]
-            queue = _get_close_to_me_queue(all_places, top_k)
+            queue = _get_proximity_queue(all_places, top_k)
 
         elif popularity:
             all_places = all_places[['id', 'num_people_visited', 'num_people_want']]
@@ -89,7 +89,7 @@ def _get_popularity_queue(matched_places, top_k):
     return queue
 
 
-def _get_close_to_me_queue(matched_places, top_k):
+def _get_proximity_queue(matched_places, top_k):
     queue = PriorityQueue(maxsize=top_k)
 
     current_loc = get_location()
@@ -102,12 +102,10 @@ def _get_close_to_me_queue(matched_places, top_k):
 
         _add_to_queue(queue, distance_score, id)
 
-        queue.put((distance_score, id))
-
     return queue
 
 
-def _get_close_to_me_and_popularity_queue(matched_places, top_k):
+def _get_proximity_and_popularity_queue(matched_places, top_k):
     queue = PriorityQueue(maxsize=top_k)
 
     current_loc = get_location()
