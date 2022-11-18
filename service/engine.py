@@ -31,7 +31,7 @@ class SearchEngine:
         all_places = pd.concat(places)
         all_places['similarity'] = similarity_scores
 
-        return all_places[['name', 'desc', 'url', 'similarity','lat','lon']]
+        return all_places[['name', 'desc', 'url', 'address', 'similarity', 'lat', 'lon', 'num_people_visited', 'num_people_want']]
 
     def query_custom(self, query, top_k, proximity=False, popularity=False):
 
@@ -64,7 +64,7 @@ class SearchEngine:
         ranked_places = pd.concat(places)
         ranked_places['similarity'] = similarity_scores
 
-        return ranked_places[['name', 'desc', 'address', 'similarity','lat','lon']]
+        return ranked_places[['name', 'desc', 'address', 'similarity', 'lat', 'lon']]
 
 
 def _get_popularity_queue(matched_places, top_k):
