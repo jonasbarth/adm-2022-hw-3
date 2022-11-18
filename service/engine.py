@@ -64,7 +64,7 @@ class SearchEngine:
         ranked_places = pd.concat(places)
         ranked_places['similarity'] = similarity_scores
 
-        return ranked_places[['name', 'desc', 'address', 'similarity', 'lat', 'lon']]
+        return ranked_places[['name', 'desc', 'address', 'similarity', 'lat', 'lon', 'num_people_visited', 'num_people_want']]
 
 
 def _get_popularity_queue(matched_places, top_k):
