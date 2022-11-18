@@ -3,6 +3,7 @@ from functools import lru_cache
 import requests
 import geopy.distance
 
+# Code taken from https://stackoverflow.com/questions/24678308/how-to-find-location-with-ip-address-in-python
 @lru_cache(maxsize=None)
 def get_ip():
     response = requests.get('https://api64.ipify.org?format=json').json()
