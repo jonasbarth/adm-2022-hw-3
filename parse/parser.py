@@ -1,9 +1,28 @@
 """A module that contains logic for parsing HTML pages from Atlas Obscura"""
+import json
+import logging
 from datetime import datetime
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 from domain import PlaceBuilder
+
+logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
+
+from joblib import Parallel, delayed
+
+
+def parse_htmls(htmls, n_jobs=7):
+    """Parses a list of html strings using multiprocessing, returning a list of Place objects."""
+
+    def parallel(html):
+        try:
+            return PlaceParser(html).parse()
+        except Exception as e:
+            print(f"Problem with parsing {e}, {html}")
+
+    places = Parallel(n_jobs=n_jobs)(delayed(parallel)(html) for html in htmls)
+    return places
 
 
 class PlaceParser:
@@ -13,7 +32,7 @@ class PlaceParser:
 
     def __init__(self, html):
         self.html = html
-        self.parser = BeautifulSoup(self.html, 'html.parser')
+        self.parser = BeautifulSoup(self.html, 'lxml')
 
     def parse(self):
         """Parses the HTML and extracts data.
@@ -21,13 +40,14 @@ class PlaceParser:
         :returns
         a Place object with the data from the HTML.
         """
-        name = self.parser.find("h1", class_="DDPage__header-title").text
+        meta_data = json.loads(self.parser.find('script', {'type': 'application/ld+json'}).text, strict=False)
+        url = meta_data['url']
+        name = meta_data['headline']
         num_people_visited = int(
             self.parser.find_all("div", class_="title-md item-action-count")[0].text)  # should use more precise class
         num_people_want = int(self.parser.find_all("div", class_="title-md item-action-count")[1].text)
         short_desc = self.parser.find("h3", class_="DDPage__header-dek").text.strip()
-        place_tags = list(
-            map(lambda anchor: anchor.text.strip(), self.parser.find_all("a", class_="itemTags__link")))
+        place_tags = meta_data['keywords'][:-1]
 
         # The description is in multiple <p> elements. We need to find them all, strip whitespace characters and join them back
         desc_parts = list(map(lambda p: p.text.strip(), self.parser.find("div", {"id": "place-body"}).find_all("p")))
@@ -41,10 +61,11 @@ class PlaceParser:
         address_parts = list(
             filter(lambda address_part: bool(address_part.text.strip()),
                    self.parser.find('address').find("div").contents))
+        address_parts = list(filter(lambda address_part: not isinstance(address_part, Tag), address_parts))
         address = ', '.join(map(lambda address_part: address_part.text.strip(), address_parts))
 
-        coordinates = self.parser.find('div', class_='DDPageSiderail__coordinates').text.strip().split(sep=',')
-        lat, lon = tuple(map(float, coordinates))
+        lat = self.parser.find('meta', {'property':'og:latitude'})['content']
+        lon = self.parser.find('meta', {'property':'og:longitude'})['content']
 
         all_editors = list(map(lambda contributor: contributor.text.strip(),
                                self.parser.find_all('a', class_='DDPContributorsList__contributor')))
@@ -55,10 +76,12 @@ class PlaceParser:
 
         editors = normal_editors + duplicate_char_editors
 
-        publication_date = datetime.strptime(self.parser.find('div', class_='DDPContributor__name').text,
-                                             '%B %d, %Y')
+        publication_date = datetime.strptime(meta_data['datePublished'], '%Y-%m-%dT%H:%M:%S+00:00')
+
         appears_in = self._find_appears_in_element()
         related_places = self._find_related_places()
+
+        id = hash((name, lat, lon))
 
         return PlaceBuilder() \
             .set_name(name) \
@@ -75,7 +98,8 @@ class PlaceParser:
             .set_publication_date(publication_date) \
             .set_appears_in(appears_in) \
             .set_related_places(related_places) \
-            .set_url("") \
+            .set_url(url) \
+            .set_id(id) \
             .build()
 
     def _find_related_places(self):
@@ -86,9 +110,12 @@ class PlaceParser:
 
     def _find_linked_places(self, title):
         all_divs = self.parser.find_all('div', class_='athanasius')
-        div_with_appears_in, = list(filter(lambda div: title in div.text,
-                                           filter(lambda div: div.find('div', class_='CardRecircSection__title'),
-                                                  all_divs)))
+        try:
+            div_with_appears_in, = list(filter(lambda div: title in div.text,
+                                               filter(lambda div: div.find('div', class_='CardRecircSection__title'),
+                                                      all_divs)))
+        except ValueError:
+            return []
 
         appears_in_titles = list(map(lambda h3: h3.text.strip(), div_with_appears_in.find_all('h3')))
 

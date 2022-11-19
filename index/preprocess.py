@@ -8,7 +8,7 @@ stop_words = set(stopwords.words('english'))
 stemmer = PorterStemmer()
 
 
-def preprocess(desc: str):
+def preprocess(desc: str, unique=True):
     """Preprocesses a string so that it can be used in the inverted index.
 
     This function:
@@ -25,6 +25,10 @@ def preprocess(desc: str):
     no_stop_words_desc = list(filter(lambda word: word not in stop_words, lower_desc))
     cleaned_desc = list(filter(lambda word: word not in string.punctuation, no_stop_words_desc))
 
-    stemmed = set(stemmer.stem(word) for word in cleaned_desc)
+    stemmed = list(stemmer.stem(word) for word in cleaned_desc)
+
+    if unique:
+        stemmed = set(stemmed)
+
     return stemmed
 

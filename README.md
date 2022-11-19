@@ -14,14 +14,16 @@ The repository contains:
 * `domain`: a python package containing domain objects for this homework.
 * `index`: a python package containing index classes used for searching.
 * `parse`: a python package with logic for parsing `.html` pages from Atlas Obscura.
-* `reader`: a python package for reading various files.
-* `writer`: a python package for writing to files.
+* `resources`: contains resource files, such as saved indeces.
+* `service`: a python packages with services such as a search engine.
 * `tests`: contains tests.
+* `util`: a python package for a collection of utility functions such as reading and writing.
 * `requirements.txt`: contains pip requirements.
+* `command_line.sh`: answer to the command line question.
 
 # How to install the necessary `nltk` corpi.
 ```python
 import nltk
 nltk.download('stopwords', download_dir='./env/Lib/nltk_data')
-nltk.download('punk', download_dir='./env/Lib/nltk_data')
+nltk.download('punkt', download_dir='./env/Lib/nltk_data')
 ```

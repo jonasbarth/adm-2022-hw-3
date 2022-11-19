@@ -2,3 +2,5 @@ pandas
 nltk
 pytest
 beautifulsoup4
+geopy
+plotly

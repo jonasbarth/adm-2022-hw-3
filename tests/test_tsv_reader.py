@@ -5,8 +5,8 @@ import os
 import pytest
 
 from parse import PlaceParser
-from reader import read_place_desc
-from writer import write_place_to_tsv
+from util import read_place_desc
+from util import write_place_to_tsv
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ import os
 import pytest
 
 from parse import PlaceParser
-from writer import write_place_to_tsv
+from util import write_places_to_tsv
 
 
 @pytest.fixture
@@ -25,5 +25,5 @@ def assert_no_file():
 
 
 def test_that_file_is_created(place):
-    tsv_path = write_place_to_tsv('./', [place, place])
+    tsv_path = write_places_to_tsv('./', [place, place])
     os.remove(tsv_path)
