@@ -21,6 +21,10 @@ The repository contains:
 * `requirements.txt`: contains pip requirements.
 * `command_line.sh`: answer to the command line question.
 
+# Viewing Plots
+Some plots are not displayed properly on GitHub. You can find a version of the notebook with everything displayed
+[here](https://nbviewer.org/github/jonasbarth/adm-2022-hw-3/blob/main/main.ipynb).
+
 # How to install the necessary `nltk` corpi.
 ```python
 import nltk
