@@ -4,12 +4,10 @@ import requests
 import geopy.distance
 
 # Code taken from https://stackoverflow.com/questions/24678308/how-to-find-location-with-ip-address-in-python
-@lru_cache(maxsize=None)
 def get_ip():
     response = requests.get('https://api64.ipify.org?format=json').json()
     return response["ip"]
 
-@lru_cache(maxsize=None)
 def get_location():
     ip_address = get_ip()
     response = requests.get(f'https://ipapi.co/{ip_address}/json/').json()
